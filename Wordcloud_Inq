@@ -1,0 +1,91 @@
+# -*- coding: utf-8 -*-
+"""
+Created on Thu Aug  9 14:11:08 2018
+
+@author: user
+"""
+
+import numpy as np
+import pandas as pd
+from PIL import Image
+from os import path
+import nltk
+from nltk.tokenize import sent_tokenize, word_tokenize
+import string
+from wordcloud import WordCloud, STOPWORDS, ImageColorGenerator
+import matplotlib.pyplot as plt
+
+
+#提取文本
+csv_data = pd.read_csv('D:\My Files\Desktop\More_than_100_RFIs-20180809.csv')
+print("Date set shape:",csv_data.shape)
+
+inq_text = csv_data['Inquiry Text']
+inqlist = []
+for line in inq_text:
+    inqlist.append(line.strip('\n'))
+print('No. of inquiries:',len(inqlist))
+text = ' '.join(inqlist)
+print('No. of words:',len(text))
+
+
+
+
+#文本分词/句
+punctuation=set(string.punctuation)  #标点符号
+stw = set(nltk.corpus.stopwords.words('english'))    #stopwords
+stw_add = {'Thanks.','Thanks!','Thanks and Regards.','Thank you.','Thank you!'}
+stw_upd = stw.union(stw_add)
+
+
+
+def splitSentence(paragraph):
+    tokenizer = nltk.data.load('tokenizers/punkt/english.pickle')
+    sentences = tokenizer.tokenize(paragraph)
+    return sentences
+
+
+#tokens_words = word_tokenize(text)
+tokens_sent = sent_tokenize(text)
+#tokens_sent2 = splitSentence(text)
+
+
+clean_tokens = tokens_sent2[:]
+for token in clean_tokens:
+    if (token in punctuation) or (token in stw_upd):
+        clean_tokens.remove(token)
+
+
+# freq
+freq = nltk.FreqDist(clean_tokens) 
+p_freq = freq.plot(20,cumulative=False)
+
+freq_list = []
+for key,val in freq.items():
+    freq_list.append(str(key) + '|' + str(val))
+    
+# Save freq
+file=open('freq.csv','w',encoding='utf-8')
+for line in freq_list:
+    file.write(line+'\n')
+file.close()
+        
+
+# Wordcloud generation
+def makeImage(text):
+#    maskpng = np.array(Image.open("D:/Users/spyder/wallhaven212757.jpg"))
+    wc = WordCloud(background_color='white', max_words=600, max_font_size=100, random_state=100, width=1366, height=768)
+    # generate word cloud
+    wc.generate_from_frequencies(text)
+
+    # store to file
+    wc.to_file("inquiry.png")
+    
+    # show
+    plt.imshow(wc, interpolation="bilinear")
+    plt.axis("off")
+    plt.show()
+
+makeImage(freq)
+
+
